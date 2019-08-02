@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+
+    <settings>
+        <!--  非log4j 方法记录日志 -->
+        <!--<setting name="logImpl" value="STDOUT_LOGGING"/>-->
+        <!-- 配置二级缓存的总开关 -->
+        <setting name="cacheEnabled" value="true"/>
+    </settings>
+    <!--  设置别名 （此处有顺序，不能乱放） -->
+    <typeAliases>
+        <typeAlias type="com.yq.android_recruit.pojo.Enterprise" alias="Enterprise"/>
+        <typeAlias type="com.yq.android_recruit.pojo.RecruitInfo" alias="RecruitInfo"/>
+        <typeAlias type="com.yq.android_recruit.pojo.Resume" alias="Resume"/>
+        <typeAlias type="com.yq.android_recruit.pojo.User" alias="User"/>
+
+    </typeAliases>
+    <environments default="oracledb">
+        <environment id="oracledb">
+            <transactionManager type="jdbc"></transactionManager>
+            <dataSource type="pooled">
+                <property name="driver" value="oracle.jdbc.driver.OracleDriver"/>
+                <property name="url" value="jdbc:oracle:thin:@localhost:1521:xe"/>
+                <property name="username" value="android_recruit"/>
+                <property name="password" value="2013101942"/>
+            </dataSource>
+        </environment>
+    </environments>
+
+
+</configuration>

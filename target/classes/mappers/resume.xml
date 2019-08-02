@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yq.android_recruit.dao.IResumeDao">
+
+    <!-- 获取简单简历-->
+    <resultMap id="divResumeMap" type="com.yq.android_recruit.pojo.DivResume">
+        <result column="user_id" property="userId"/>
+        <result column="r_name" property="resumeName"/>
+        <result column="job" property="job"/>
+        <result column="u_username" property="name"/>
+        <result column="r_gender" property="gender"/>
+        <result column="r_age" property="age"/>
+        <result column="r_qualifications" property="qualifications"/>
+        <result column="major" property="major"/>
+    </resultMap>
+    <select id="getDivResumes" resultMap="divResumeMap" parameterType="com.yq.android_recruit.component.Page">
+        select  r.user_id, r.r_name, u.u_username,r.r_gender,r.r_age,r.r_qualifications,j.job,e.major
+        from (
+        select rownum rw,whe.* from( select  r.user_id,r.r_name,max(e.years_start) maxyear
+        from t_resume r left join t_user u on r.user_id = u.user_id
+        left join t_job_intent j on r.user_id = j.user_id and r.r_name = j.r_name
+        left join t_education e on r.user_id = e.user_id and r.r_name = e.r_name
+        where r.isvisible = 1
+        group by r.user_id,r.r_name
+        )whe where  rownum &lt;= #{end}
+        )rju
+        left join t_resume r on rju.user_id = r.user_id and rju.r_name = r.r_name
+        left join t_user u on u.user_id = rju.user_id
+        left join t_job_intent j on rju.user_id = j.user_id and rju.r_name = j.r_name
+        left join t_education e on rju.user_id = e.user_id and rju.r_name = e.r_name and e.years_start = rju.maxyear
+        where rw >=#{start}
+        <if test="bean.job != null and bean.job != ''">
+            and j.job = #{bean.job,jdbcType=VARCHAR}
+        </if>
+        <if test="bean.gender != null and bean.gender != ''">
+            and r.r_gender = #{bean.gender,jdbcType=VARCHAR}
+        </if>
+        <if test="bean.qualifications == '本科'">
+            and r.r_qualifications = '本科'
+            or r.r_qualifications = '硕士研究生'
+            or r.r_qualifications = '博士'
+        </if>
+        <if test="bean.qualifications == '硕士研究生'">
+            and r.r_qualifications = '硕士研究生'
+            or r.r_qualifications = '博士'
+        </if>
+        <if test="bean.qualifications == '博士'">
+            and r.r_qualifications = '博士'
+        </if>
+
+    </select>
+
+<!--获取详细简历-->
+    <resultMap id="resumeMap" type="com.yq.android_recruit.pojo.Resume">
+        <result column="user_id" property="userId"/>
+        <result column="r_name" property="resumeName"/>
+        <result column="u_username" property="userName"/>
+        <result column="r_gender" property="gender"/>
+        <result column="r_birthday" property="birthday"/>
+        <result column="r_age" property="age"/>
+        <result column="r_city" property="city"/>
+        <result column="r_tel" property="tel"/>
+        <result column="r_qualifications" property="qualifications"/>
+        <result column="r_work_year" property="work_year"/>
+        <result column="state" property="state"/>
+        <result column="isvisible" property="isvisible"/>
+    </resultMap>
+    <select id="getResume" resultMap="resumeMap">
+        select r.user_id, r.r_name,u.u_username, r.r_gender,r.r_birthday,r.r_age,r.r_city,r.r_tel,r.r_qualifications,r.r_work_year,r.state,r.isvisible from T_resume r left join T_user u on r.user_id = u.user_id  where r.user_id = #{arg0} and r.r_name = #{arg1} and r.isvisible = '1'
+    </select>
+
+
+
+    <select id="getRecordTotal" resultType="int" parameterType="com.yq.android_recruit.component.Page">
+        select count(1) from  t_resume r left join t_job_intent j on r.user_Id = j.user_id and r.r_name = j.r_name  where isvisible = 1
+        <if test="bean.job != null and bean.job != ''">
+            and j.job = #{bean.job,jdbcType=VARCHAR}
+        </if>
+        <if test="bean.gender != null and bean.gender != ''">
+            and r.r_gender = #{bean.gender,jdbcType=VARCHAR}
+        </if>
+        <if test="bean.qualifications == '本科'">
+            and r.r_qualifications = '本科'
+            or r.r_qualifications = '硕士研究生'
+            or r.r_qualifications = '博士'
+        </if>
+        <if test="bean.qualifications == '硕士研究生'">
+            and r.r_qualifications = '硕士研究生'
+            or r.r_qualifications = '博士'
+        </if>
+        <if test="bean.qualifications == '博士'">
+            and r.r_qualifications = '博士'
+        </if>
+    </select>
+
+    <select id="getJobs" resultType="java.lang.String">
+        select distinct job from T_resume r left join t_job_intent j on r.user_id = j.user_id and r.r_name = j.r_name where r.isvisible = 1 and j.job is not null
+    </select>
+    <!--查询收到的简历-->
+    <select id="getReceivedResume" resultMap="divResumeMap" parameterType="String">
+    select  r.user_id, r.r_name, u.u_username,r.r_gender,r.r_age,r.r_qualifications,j.job,e.major from
+    ( select r.user_id,r.r_name ,max(e.years_start) maxyear  from
+        T_resume r
+      left join t_education e on r.user_Id = e.user_id and r.r_name = e.r_name
+      where (r.user_id,r.r_name) in (select distinct p.person_id, p.resume_name from t_person_company p where company_id = #{companyId} and success = '0')
+        and  r.isvisible = 1
+           group by r.user_id,r.r_name)rju
+     left join  T_resume r on rju.user_id = r.user_id and rju.r_name = r.r_name
+     left join t_job_intent j on rju.user_id = j.user_id and rju.r_name = j.r_name
+     left join T_user u on rju.user_id=u.user_id
+      left join t_education e on rju.user_Id = e.user_id and rju.r_name = e.r_name and e.years_start = rju.maxyear
+    </select>
+
+    <!--pc查看审核通过的简历-->
+    <select id="checkSuccessResume" resultMap="divResumeMap" parameterType="String">
+    select  r.user_id, r.r_name, u.u_username,r.r_gender,r.r_age,r.r_qualifications,j.job,e.major from
+    ( select r.user_id,r.r_name ,max(e.years_start) maxyear  from
+        T_resume r
+      left join t_education e on r.user_Id = e.user_id and r.r_name = e.r_name
+      where (r.user_id,r.r_name) in (select distinct p.person_id, p.resume_name from t_person_company p where company_id = #{companyId} and success = '1')
+        and  r.isvisible = 1
+           group by r.user_id,r.r_name)rju
+     left join  T_resume r on rju.user_id = r.user_id and rju.r_name = r.r_name
+     left join t_job_intent j on rju.user_id = j.user_id and rju.r_name = j.r_name
+     left join T_user u on rju.user_id=u.user_id
+      left join t_education e on rju.user_Id = e.user_id and rju.r_name = e.r_name and e.years_start = rju.maxyear
+
+    </select>
+
+    <!--获取某人的所有简历start-->
+        <!--查询普通简历-->
+    <select id="getUserResumes" resultMap="resumeMap" parameterType="String">
+       select r.user_id, r.r_name,u.u_username, r.r_gender,r.r_birthday,r.r_age,r.r_city,r.r_tel,
+       r.r_qualifications,r.r_work_year,r.state,r.isvisible from T_resume r left join T_user u on
+       r.user_id = u.user_id  where r.user_id = #{userId}
+    </select>
+        <!--查询工作经验-->
+    <resultMap id="workExperienceMap" type="com.yq.android_recruit.pojo.Experience">
+        <id column="exp_id" property="expId"/>
+        <result column="user_id" property="userId"/>
+        <result column="r_name" property="resumeName"/>
+        <result column="years_start" property="yearsStart"/>
+        <result column="years_end" property="yearsEnd"/>
+        <result column="company_name" property="companyName"/>
+        <result column="job" property="job"/>
+        <result column="job_describe" property="jobDescribe"/>
+    </resultMap>
+    <select id="getWorkExperience" resultMap="workExperienceMap" parameterType="String">
+         select * from t_experience where user_id = #{param1} and r_name = #{param2}
+         order by years_start desc
+    </select>
+        <!--查询项目经验-->
+    <resultMap id="ProjectExperienceMap" type="com.yq.android_recruit.pojo.ProjectExprience">
+        <id column="project_exp_id" property="projectExpId"/>
+        <result column="user_id" property="userId"/>
+        <result column="r_name" property="resumeName"/>
+        <result column="time_start" property="timeStart"/>
+        <result column="time_end" property="timeEnd"/>
+        <result column="company_name" property="companyName"/>
+        <result column="project_name" property="projectName"/>
+        <result column="pro_describe" property="proDescribe"/>
+    </resultMap>
+    <select id="getProjectExperience" resultMap="ProjectExperienceMap" parameterType="String">
+        select * from t_project_exprience where user_id = #{param1} and r_name = #{param2}
+        order by time_start desc
+    </select>
+        <!--查询教育经历-->
+    <resultMap id="EducationExperienceMap" type="com.yq.android_recruit.pojo.Education">
+        <id column="edu_id" property="eduId"/>
+        <result column="user_id" property="userId"/>
+        <result column="r_name" property="resumeName"/>
+        <result column="years_start" property="yearsStart"/>
+        <result column="years_end" property="yearsEnd"/>
+        <result column="school" property="school"/>
+        <result column="major" property="major"/>
+    </resultMap>
+    <select id="getEducationExperience" resultMap="EducationExperienceMap" parameterType="String">
+        select * from t_education where user_id = #{param1} and r_name = #{param2}
+        order by years_start desc
+    </select>
+        <!--查询教育工作情况-->
+    <resultMap id="educationWorkConditionMap" type="com.yq.android_recruit.pojo.EduJobCondition">
+        <id column="edu_job_condition_id" property="eduJobConditionId"/>
+        <result column="user_id" property="userId"/>
+        <result column="r_name" property="resumeName"/>
+        <result column="times" property="times"/>
+        <result column="con_describe" property="conDescribe"/>
+    </resultMap>
+    <select id="getEducationWorkCondition" resultMap="educationWorkConditionMap" parameterType="String">
+        select * from t_edu_job_condition where user_id = #{param1} and  r_name = #{param2}
+        order by times desc
+    </select>
+        <!--查询求职意向-->
+    <resultMap id="JobIntentMap" type="com.yq.android_recruit.pojo.JobIntent">
+        <id column="intent_id" property="intentId"/>
+        <result column="user_id" property="userId"/>
+        <result column="r_name" property="resumeName"/>
+        <result column="city" property="city"/>
+        <result column="job" property="job"/>
+        <result column="intent_salary" property="intentSalary"/>
+        <result column="arrival_time" property="arrivalTime"/>
+        <result column="self_evaluation" property="selfEvaluation"/>
+        <result column="self_tag" property="selfTag"/>
+    </resultMap>
+    <select id="getJobIntent" resultMap="JobIntentMap" parameterType="String">
+        select * from t_job_intent where user_id = #{param1} and r_name = #{param2}
+    </select>
+    <!--获取某人的所有简历end-->
+
+    <!--App删除简历-->
+    <delete id="deleteResume" parameterType="String">
+        delete t_resume where user_id = #{param1} and r_name = #{param2}
+    </delete>
+
+    <!--app修改简历设置-->
+    <update id="updateResumeSetting" parameterType="String">
+        update t_resume set r_name = #{param3}, isvisible = #{param4} where
+        user_id = #{param1} and r_name = #{param2}
+    </update>
+
+    <!--app编辑简历基本信息-->
+    <update id="updateResumeBaseInfo" parameterType="String">
+          update t_resume set r_gender = #{param3},r_birthday = to_date(#{param4},'yyyy-mm-dd'),r_age = #{param5},r_tel = #{param6},state = #{param7},
+         r_city = #{param8},r_qualifications = #{param9},r_work_year = #{param10} where user_id = #{param1} and
+         r_name = #{param2}
+    </update>
+
+    <!--创建简历-->
+    <insert id="createResume" parameterType="String">
+        insert into t_resume values (#{param1},#{param2},null,null,null,null,null,null,null,null,#{param3})
+    </insert>
+
+</mapper>

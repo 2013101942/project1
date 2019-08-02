@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yq.android_recruit.dao.IEducationDao">
+
+    <resultMap id="educationMap" type="com.yq.android_recruit.pojo.Education">
+        <id column="edu_id" property="eduId"/>
+        <result column="user_id" property="userId"/>
+        <result column="r_name" property="resumeName"/>
+        <result column="years_start" property="yearsStart"/>
+        <result column="years_end" property="yearsEnd"/>
+        <result column="school" property="school"/>
+        <result column="major" property="major"/>
+    </resultMap>
+    <select id="getEducations" resultMap="educationMap">
+        select * from T_education where user_id = #{arg0} and r_name = #{arg1} order by years_start desc
+    </select>
+
+    <!--App删除Education-->
+    <delete id="deleteEducation" parameterType="String">
+         delete t_education where user_id = #{param1} and r_name = #{param2}
+    </delete>
+
+    <!--修改简历名-->
+    <update id="updateResumeName" parameterType="String">
+        update t_education set r_name = #{param3} where user_id = #{param1} and r_name = #{param2}
+    </update>
+    <!--app编辑Education-->
+    <update id="updateEducation" parameterType="String">
+        update t_education set years_start = to_date(#{param4},'yyyy-mm-dd'),years_end = to_date(#{param5},'yyyy-mm-dd'),school = #{param6},
+        major = #{param7} where user_id = #{param1} and r_name = #{param2} and edu_id = #{param3}
+    </update>
+    <!--app创建Education-->
+    <insert id="createEducation" parameterType="String">
+        insert into t_education values (seq_edu.nextval,#{param1},#{param2},to_date(#{param3},'yyyy-mm-dd'),to_date(#{param4},'yyyy-mm-dd'),#{param5},#{param6})
+    </insert>
+</mapper>

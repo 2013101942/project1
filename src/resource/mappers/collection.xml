@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yq.android_recruit.dao.ICollectionDao">
+
+    <!--App收藏-->
+    <insert id="addToCollectionApp">
+        insert
+         when (not exists (select 1 from t_collection where person_Id = #{param1}  and company_Id = #{param2} and company_To_Person = #{param3} and recruit_id = #{param4} and resume_Name is null ))then
+         into t_collection values(#{param1},#{param2},#{param3},#{param4},#{param5},sysdate) select #{param1},#{param2},#{param3},#{param4} from dual
+    </insert>
+
+    <!--PC收藏-->
+    <insert id="addToCollectionPC">
+        insert
+         when (not exists (select 1 from t_collection where person_Id = #{param1}  and company_Id = #{param2} and company_To_Person = #{param3}  and resume_name = #{param4} and recruit_id is null ))then
+         into t_collection values(#{param1},#{param2},#{param3},#{param4},#{param5},sysdate) select #{param1},#{param2},#{param3},#{param4} from dual
+    </insert>
+    <!--PC取消收藏-->
+    <delete id="cancelCollectPC">
+        delete  t_collection where person_id = #{param1} and company_id = #{param2} and company_to_person = #{param3} and  resume_name = #{param4}
+    </delete>
+
+    <!--App取消收藏-->
+    <delete id="cancelCollectApp">
+        delete t_collection where person_id = #{param1} and company_id = #{param2} and company_to_person = #{param3} and  recruit_id = #{param4}
+    </delete>
+<!-- 查看收藏了的简历-->
+    <resultMap id="collectResumeMap" type="com.yq.android_recruit.pojo.DivResume">
+        <result column="user_id" property="userId"/>
+        <result column="r_name" property="resumeName"/>
+        <result column="job" property="job"/>
+        <result column="u_username" property="name"/>
+        <result column="r_gender" property="gender"/>
+        <result column="r_age" property="age"/>
+        <result column="r_qualifications" property="qualifications"/>
+        <result column="major" property="major"/>
+    </resultMap>
+    <select id="getCollectResume" resultMap="collectResumeMap" parameterType="String">
+   select  r.user_id,r.r_name,j.job,r.r_gender,u.u_username,r.r_age,r.r_qualifications,e.major from
+         ( select r.user_id,r.r_name, max(e.years_start) maxyear from t_resume r
+                   left join T_education e on e.user_id = r.user_id and e.r_name = r.r_name
+                    where (r.user_id,r.r_name) in (select person_id,resume_name from t_collection where company_to_person = 1 and company_id = #{companyId}) and r.isvisible = 1
+                    group by r.user_id , r.r_name ) rju
+  left join  t_resume r on r.user_id = rju.user_id and r.r_name = rju.r_name
+   left join t_job_intent j on r.user_id = j.user_id and r.r_name = j.r_name
+   left join T_user u on r.user_id = u.user_id
+   left join T_education e on e.user_id = r.user_id and e.r_name = r.r_name and e.years_start = rju.maxyear
+
+    </select>
+
+    <!--app查看收藏了的招聘信息-->
+    <resultMap id="collectRecruit" type="com.yq.android_recruit.pojo.DivAppRecruitInfo">
+        <result column="recruit_id" property="recruitId"/>
+        <result column="e_id" property="eId"/>
+        <result column="e_name" property="eName"/>
+        <result column="e_property" property="eProperty"/>
+        <result column="e_city" property="city"/>
+        <result column="job" property="job"/>
+        <result column="staff_num" property="staffNum"/>
+        <result column="recruit_info" property="recruitInfo"/>
+        <result column="experience" property="experience"/>
+        <result column="salary_start" property="salaryStart"/>
+        <result column="salary_end" property="salaryEnd"/>
+        <result column="times" property="times"/>
+    </resultMap>
+    <select id="getCollectRecruit" resultMap="collectRecruit" parameterType="String">
+    select r.recruit_id,r.e_id,e.e_name,e.e_property,e.e_city,r.job,r.salary_start,r.salary_end
+    ,r.staff_num,r.recruit_info,r.experience from  t_collection c
+    left join t_recruitment_Info r on r.e_id = c.company_id and c.recruit_id = r.recruit_id
+    left join t_enterprise e on r.e_id = e.e_id
+     where c.person_id = #{personId} and company_to_person = '0'
+    </select>
+
+    <!--修改了简历名-->
+    <update id="updateResumeName" parameterType="String">
+        update t_collection set resume_name = #{param3} where person_id = #{param1} and resume_name = #{param2}
+    </update>
+
+    <!--因删除了某条招聘信息而删除某条记录-->
+    <delete id="deleteCollectionPC" parameterType="String">
+        delete t_collection where company_id = #{param1} and company_to_person = '0' and recruit_id = #{param2}
+    </delete>
+
+    <!--因删除了某条简历而删除某条记录-->
+    <delete id="deleteCollectionApp" parameterType="String">
+        delete t_collection where person_id = #{param1} and company_to_person = '1' resume_name = #{param2}
+    </delete>
+</mapper>

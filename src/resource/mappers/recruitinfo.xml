@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yq.android_recruit.dao.IRecruitInfoDao">
+
+    <resultMap id="recruitInfoMap" type="com.yq.android_recruit.pojo.RecruitInfo">
+        <id column="recruit_id" property="recruitId"/>
+        <result column="e_id" property="eId"/>
+        <result column="job" property="job"/>
+        <result column="staff_num" property="staffNum"/>
+        <result column="salary_start" property="salaryStart"/>
+        <result column="salary_end" property="salaryEnd"/>
+        <result column="recruit_info" property="recruitInfo"/>
+        <result column="experience" property="experience"/>
+    </resultMap>
+
+    <select id="getRecruitInfo" resultMap="recruitInfoMap" resultType="RecruitInfo">
+       select * from t_recruitment_Info where recruit_id = #{param1} and e_id = #{param2}
+    </select>
+
+    <!--Android端查看所有记录的总页数-->
+    <select id="getAppPageCount" parameterType="com.yq.android_recruit.component.Page" resultType="int">
+        select COUNT (1) from t_enterprise e , t_recruitment_Info r where e.e_id = r.e_id
+        <if test="bean.job != null">
+            and job = #{bean.job}
+        </if>
+        <if test="bean.salaryStart != null">
+            and salary_start >= #{bean.salaryStart}
+        </if>
+        <if test="bean.salaryEnd != null">
+            and salary_end &lt;= #{bean.salaryEnd}
+        </if>
+        <if test="bean.eProperty != null">
+            and e_property = #{bean.eProperty}
+        </if>
+    </select>
+<!--查询所有岗位-->
+    <select id="getJobs" resultType="String">
+        select distinct job from t_recruitment_Info
+    </select>
+<!--查询某公司所有岗位-->
+    <select id="getMyJobs" resultType="String" parameterType="String">
+        select distinct job from t_recruitment_Info where e_id = #{companyId}
+    </select>
+    <!--根据job查询recruitId-->
+    <select id="getRecruitId" parameterType="String" resultType="String">
+        select recruit_id from t_recruitment_Info where e_id = #{param1} and job  = #{param2}
+    </select>
+    <!-- 组合查询，利用表连接-->
+    <resultMap id="divAppRecruitInfoMap" type="com.yq.android_recruit.pojo.DivAppRecruitInfo">
+        <id column="recruit_id" property="recruitId"/>
+        <result column="e_id" property="eId"/>
+        <result column="e_name" property="eName"/>
+        <result column="e_property" property="eProperty"/>
+        <result column="e_city" property="city"/>
+        <result column="job" property="job"/>
+        <result column="staff_num" property="staffNum"/>
+        <result column="recruit_info" property="recruitInfo"/>
+        <result column="experience" property="experience"/>
+        <result column="times" property="times"/>
+        <result column="salary_start" property="salaryStart"/>
+        <result column="salary_end" property="salaryEnd"/>
+    </resultMap>
+    <!-- Android端查看所有招聘信息-->
+    <select id="getDivAppRecruitInfo" resultMap="divAppRecruitInfoMap" parameterType="com.yq.android_recruit.component.Page">
+       select * from (select  r.staff_num,r.experience,r.recruit_info,r.times, r.recruit_id, e.e_id,e.e_name,e.e_property,e.e_city,r.job,r.salary_start,r.salary_end from t_enterprise e , t_recruitment_Info r where e.e_id = r.e_id
+        <if test="bean.job!=null">
+            and job = #{bean.job}
+        </if>
+        <if test="bean.eProperty != null">
+            and e_property = #{bean.eProperty}
+        </if>
+        ）where  1=1
+        <if test="bean.salaryStart!=null">
+            and salary_start >= #{bean.salaryStart}
+        </if>
+        <if test="bean.salaryEnd!=null">
+            or salary_end  &lt;= #{bean.salaryEnd}
+        </if>
+    </select>
+
+    <!--发布招聘信息-->
+    <insert id="releaseRecruit" parameterType="String">
+        insert into t_recruitment_Info values(#{param1,jdbcType=NUMERIC},#{param2,jdbcType=VARCHAR},#{param3,jdbcType=VARCHAR},#{param4,jdbcType=VARCHAR},#{param5,jdbcType=VARCHAR},#{param6,jdbcType=VARCHAR},#{param7,jdbcType=VARCHAR},seq_recruitment_info.nextval,sysdate)
+    </insert>
+
+    <!--公司查看自己发布过的招聘信息-->
+    <resultMap id="myRecruitInfoMap" type="com.yq.android_recruit.pojo.DivRecruitInfo">
+        <result column="recruit_id" property="recruitId"/>
+        <result column="e_id" property="eId"/>
+        <result column="job" property="job"/>
+        <result column="staff_num" property="staffNum"/>
+        <result column="salary_start" property="salaryStart"/>
+        <result column="salary_end" property="salaryEnd"/>
+        <result column="recruit_info" property="recruitInfo"/>
+        <result column="experience" property="experience"/>
+        <result column="times" property="times"/>
+    </resultMap>
+    <select id="getMyRecruitInfo" resultMap="myRecruitInfoMap" parameterType="String">
+        select recruit_id ,e_id,job,staff_num,salary_start,salary_end,recruit_info,experience,times from T_recruitment_info where e_id = #{companyId} order by times desc
+    </select>
+
+    <!--某公司修改自己的某条招聘信息-->
+    <update id="updateMyRecruitInfo" parameterType="String">
+        update t_recruitment_Info set job = #{param3,jdbcType=VARCHAR},staff_num = #{param4,jdbcType=VARCHAR},salary_start = #{param5,jdbcType=VARCHAR},
+        salary_end = #{param6,jdbcType=VARCHAR},recruit_info = #{param7,jdbcType=VARCHAR},experience = #{param8,jdbcType=VARCHAR},times = sysdate
+        where e_id = #{param1,jdbcType=NUMERIC} and recruit_id = #{param2,jdbcType=NUMERIC}
+    </update>
+    <!-- 公司删除某条招聘信息-->
+    <delete id="deleteMyRecruit" parameterType="String">
+        delete t_recruitment_Info where e_id = #{param1,jdbcType=NUMERIC} and recruit_id = #{param2,jdbcType=NUMERIC}
+    </delete>
+
+
+    <resultMap id="applyRecruit" type="com.yq.android_recruit.pojo.DivAppRecruitInfo">
+        <result column="recruit_id" property="recruitId"/>
+        <result column="e_id" property="eId"/>
+        <result column="e_name" property="eName"/>
+        <result column="e_property" property="eProperty"/>
+        <result column="e_city" property="city"/>
+        <result column="job" property="job"/>
+        <result column="staff_num" property="staffNum"/>
+        <result column="recruit_info" property="recruitInfo"/>
+        <result column="experience" property="experience"/>
+        <result column="salary_start" property="salaryStart"/>
+        <result column="salary_end" property="salaryEnd"/>
+        <result column="resume_name" property="resumeName"/>
+        <result column="times" property="times"/>
+    </resultMap>
+
+    <!-- App 查看已申请的招聘信息(如果相互发消息会有两条，只能选一条)-->
+    <select id="getApplyRecruit" resultMap="applyRecruit" parameterType="String">
+       select distinct pc.resume_name, r.recruit_id,r.e_id,e.e_name,e.e_property,e.e_city,r.job,r.salary_start,r.salary_end
+          ,r.staff_num,r.recruit_info,r.experience
+          from t_person_company pc left join t_enterprise e on pc.company_id = e.e_id left join
+    t_recruitment_Info r on pc.company_id = r.e_id and pc.recruit_id = r.recruit_id  where
+     pc.resume_name is not null and pc.success = 0 and pc.person_id = #{personId}
+    and company_to_person = '0'
+
+    </select>
+
+</mapper>

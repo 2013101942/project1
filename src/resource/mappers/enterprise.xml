@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yq.android_recruit.dao.IEnterpriseDao">
+
+    <resultMap id="enterpriseMap" type="com.yq.android_recruit.pojo.Enterprise">
+        <id column="e_id" property="id"/>
+        <result column="e_name" property="e_name"/>
+        <result column="e_property" property="e_property"/>
+        <result column="e_scale" property="e_scale"/>
+        <result column="e_city" property="e_city"/>
+        <result column="e_addr" property="e_addr"/>
+        <result column="e_tel" property="e_tel"/>
+        <result column="e_info" property="e_info"/>
+        <result column="is_freeze" property="isFreeze"/>
+    </resultMap>
+    <select id="getEnterprise" resultMap="enterpriseMap" parameterType="String">
+        select * from t_enterprise where e_id = #{eId,jdbcType=VARCHAR}
+    </select>
+
+    <!--编辑企业信息-->
+    <update id="updateEnterprise" parameterType="String">
+        update t_enterprise set e_name = #{param2,jdbcType=VARCHAR}, e_property = #{param3,jdbcType=VARCHAR}, e_scale = #{param4,jdbcType=VARCHAR}, e_city = #{param5,jdbcType=VARCHAR}, e_addr = #{param6,jdbcType=VARCHAR}, e_tel = #{param7,jdbcType=VARCHAR}, e_info = #{param8,jdbcType=VARCHAR} where e_id = #{param1,jdbcType=NUMERIC}
+    </update>
+    <!--添加企业信息-->
+    <insert id="setEnterprise" parameterType="String">
+        insert into t_enterprise values (#{param1},#{param2},null,null,null,null,null,null,'0')
+    </insert>
+</mapper>

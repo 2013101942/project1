@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yq.android_recruit.dao.IProjectExperienceDao">
+
+    <resultMap id="projectExpMap" type="com.yq.android_recruit.pojo.ProjectExprience">
+        <result column="project_exp_id" property="projectExpId"/>
+        <result column="user_id" property="userId"/>
+        <result column="r_name" property="resumeName"/>
+        <result column="time_start" property="timeStart"/>
+        <result column="time_end" property="timeEnd"/>
+        <result column="company_name" property="companyName"/>
+        <result column="project_name" property="projectName"/>
+        <result column="pro_describe" property="proDescribe"/>
+    </resultMap>
+    <select id="getProjectExpriences" resultMap="projectExpMap">
+        select * from T_project_exprience where user_id = #{arg0} and r_name = #{arg1} order by time_start desc
+    </select>
+
+    <!--删除ProjectExperience-->
+    <delete id="deleteProjectExperience" parameterType="String">
+        delete t_project_exprience where user_id = #{param1} and r_name = #{param2}
+    </delete>
+
+    <!--修改简历名-->
+    <update id="updateResumeName" parameterType="String">
+        update t_project_exprience set r_name = #{param3} where user_id = #{param1} and r_name = #{param2}
+    </update>
+    <!--编辑projectExperience-->
+    <update id="updateProjectExperience" parameterType="String">
+        update t_project_exprience set time_start = to_date(#{param4},'yyyy-mm-dd'),time_end = to_date(#{param5},'yyyy-mm-dd'),company_name = #{param6},
+        project_name = #{param7},pro_describe = #{param8} where user_id = #{param1} and
+        r_name = #{param2} and project_exp_id = #{param3}
+    </update>
+    <!--创建projectExperience-->
+    <insert id="createProjectExperience" parameterType="String">
+        insert into t_project_exprience values (seq_pro_exp.nextval,#{param1},#{param2},to_date(#{param3},'yyyy-mm-dd'),to_date(#{param4},'yyyy-mm-dd'),#{param5},#{param6},#{param7})
+    </insert>
+</mapper>

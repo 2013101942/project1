@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yq.android_recruit.dao.IEduJobConditionDao">
+
+    <resultMap id="eduJobConditionMap" type="com.yq.android_recruit.pojo.EduJobCondition">
+        <id column="edu_job_condition_id" property="eduJobConditionId"/>
+        <result column="user_id" property="userId"/>
+        <result column="r_name" property="resumeName"/>
+        <result column="times" property="times"/>
+        <result column="con_describe" property="conDescribe"/>
+    </resultMap>
+    <select id="getEduJobConditions" resultMap="eduJobConditionMap">
+        select * from T_edu_job_condition where user_id = #{arg0} and r_name = #{arg1} order by times desc
+    </select>
+
+    <!--删除eduJobCondition-->
+    <delete id="deleteEduJobCondition" parameterType="String">
+        delete t_edu_job_condition where user_id = #{param1} and r_name = #{param2}
+    </delete>
+
+    <!--修改简历名-->
+    <update id="updateResumeName" parameterType="String">
+        update t_edu_job_condition set r_name = #{param3} where user_id = #{param1} and r_name = #{param2}
+    </update>
+    <!--编辑eduJobCondition-->
+    <update id="updateEduJobCondition" parameterType="String">
+        update t_edu_job_condition set times = to_date(#{param4},'yyyy-mm-dd'),con_describe = #{param5} where
+        user_id = #{param1} and r_name = #{param2} and edu_job_condition_id = #{param3}
+    </update>
+    <!--创建eduJobCondition-->
+    <insert id="createEduJobCondition" parameterType="String">
+        insert into t_edu_job_condition values (seq_edu_job_condition.nextval,#{param1},#{param2},to_date(#{param3},'yyyy-mm-dd'),#{param4})
+    </insert>
+</mapper>

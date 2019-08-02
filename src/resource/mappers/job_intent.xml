@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yq.android_recruit.dao.IJobIntentDao">
+
+    <resultMap id="jobIntentMap" type="com.yq.android_recruit.pojo.JobIntent">
+        <id column="intent_id" property="intentId"/>
+        <result column="user_id" property="userId"/>
+        <result column="r_name" property="resumeName"/>
+        <result column="city" property="city"/>
+        <result column="job" property="job"/>
+        <result column="intent_salary" property="intentSalary"/>
+        <result column="arrival_time" property="arrivalTime"/>
+        <result column="self_evaluation" property="selfEvaluation"/>
+        <result column="self_tag" property="selfTag"/>
+    </resultMap>
+    <select id="getJobIntents" resultMap="jobIntentMap">
+        select * from T_job_intent where user_id = #{arg0} and r_name = #{arg1}
+    </select>
+
+    <!--删除jobIntent-->
+    <delete id="deleteJobIntent" parameterType="String">
+        delete t_job_intent where user_id = #{param1} and r_name = #{param2}
+    </delete>
+
+    <!--修改简历名-->
+    <update id="updateResumeName" parameterType="String">
+        update t_job_intent set r_name = #{param3} where user_id = #{param1} and r_name = #{param2}
+    </update>
+    <!--App编辑jobIntent-->
+    <update id="updateJonIntent" parameterType="String">
+        update t_job_intent set city = #{param3},job = #{param4},intent_salary = #{param5},
+        arrival_time = #{param6},self_evaluation = #{param7},self_tag = #{param8}
+        where user_id = #{param1} and r_name = #{param2}
+    </update>
+    <!--创建jobIntent-->
+    <insert id="createJobIntent" parameterType="String">
+        insert into t_job_intent values (seq_intent.nextval,#{param1},#{param2},null,null,null,null,null,null)
+    </insert>
+
+    <!--获得所有学历-->
+    <select id="getQualifications" resultType="java.lang.String">
+        select distinct r_qualifications from t_resume r left join t_job_intent j on r.user_id = j.user_id and r.r_name = j.r_name and r.isvisible = 1
+    </select>
+
+</mapper>

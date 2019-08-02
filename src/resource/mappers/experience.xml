@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yq.android_recruit.dao.IExperienceDao">
+
+    <resultMap id="experienceMap" type="com.yq.android_recruit.pojo.Experience">
+        <id column="exp_id" property="expId"/>
+        <result column="user_id" property="userId"/>
+        <result column="r_name" property="resumeName"/>
+        <result column="years_start" property="yearsStart"/>
+        <result column="years_end" property="yearsEnd"/>
+        <result column="company_name" property="companyName"/>
+        <result column="job" property="job"/>
+        <result column="job_describe" property="jobDescribe"/>
+    </resultMap>
+    <select id="getExperiences" resultMap="experienceMap" resultType="List">
+        select * from T_experience where user_id = #{arg0} and r_name = #{arg1} order by years_start desc
+    </select>
+
+    <!--App删除Experience-->
+    <delete id="deleteExperience" parameterType="String">
+        delete T_experience where user_id = #{param1} and r_name = #{param2}
+    </delete>
+
+    <!--修改简历名-->
+    <update id="updateResumeName" parameterType="String">
+        update T_experience set r_name = #{param3} where user_id = #{param1} and r_name = #{param2}
+    </update>
+    <!--App编辑-->
+    <update id="updateExperience" parameterType="String">
+        update T_experience set years_start = to_date(#{param4},'yyyy-mm-dd'),years_end = to_date(#{param5},'yyyy-mm-dd'),company_name = #{param6},
+        job = #{param7},job_describe = #{param8} where user_id = #{param1} and r_name = #{param2} and
+        exp_id = #{param3}
+    </update>
+    <!--App创建-->
+    <insert id="createExperience" parameterType="String">
+        insert into t_experience values (seq_exp.nextval,#{param1},#{param2},to_date(#{param3},'yyyy-mm-dd'),to_date(#{param4},'yyyy-mm-dd'),#{param5},#{param6},#{param7})
+    </insert>
+</mapper>

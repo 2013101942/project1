@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+    <!-- 开启扫描 (com.seecen.ssm.*),指定spring管理的范围 -->
+    <context:component-scan base-package="com.yq.android_recruit"></context:component-scan>
+    <!-- 开启事务注解 (用注解添加事务，需要单独开启) -->
+    <tx:annotation-driven transaction-manager="myTransaction"/>
+    <!-- 读取properties配置文件 -->
+    <context:property-placeholder location="classpath:jdbc.properties"/>
+    <!-- 配置数据源 -->
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource">
+        <property name="url" value="${jdbc.url}"/>
+        <property name="username" value="${jdbc.username}"/>
+        <property name="password" value="${jdbc.pwd}"/>
+        <property name="driverClassName" value="${jdbc.driver}"/>
+        <property name="initialSize" value="5"/>
+        <property name="minIdle" value="5"/>
+        <property name="maxActive" value="10"/>
+        <property name="maxWait" value="5000"/>
+        <!-- 监控SQL的配置，配置 filters 的别名-->
+        <property name="filters" value="stat" />
+        <property name="timeBetweenEvictionRunsMillis" value="30000"/>
+        <property name="minEvictableIdleTimeMillis" value="300000"/>
+        <property name="testWhileIdle" value="true"/>
+        <property name="validationQuery" value="SELECT '1' from dual "/>
+        <property name="testOnBorrow" value="false"/>
+        <property name="testOnReturn" value="false"/>
+        <!-- 打开PSCache，并且指定每个连接上PSCache的大小 -->
+        <property name="poolPreparedStatements" value="true"/>
+        <property name="maxPoolPreparedStatementPerConnectionSize" value="20"/>
+        <!-- 配置监控统计拦截的filters，去掉后监控界面sql无法统计
+        <property name="filters" value="stat" />
+        -->
+    </bean>
+    <!-- 创建mybatis的sessionFactory -->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"></property>
+        <property name="configLocation" value="classpath:mybatis.xml"></property>
+        <property name="mapperLocations" value="classpath:/mappers/*"></property>
+    </bean>
+    <!-- 创建Mybatis jdbc事务（等待调用） -->
+    <bean id="myTransaction" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"></property>
+    </bean>
+
+    <!-- 启动生成dao接口的代理对象，创造 dao对象 -->
+    <bean id="mapperScannerConfigurer" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <!-- com.yq.android_recruit.dao 中所有的类-->
+        <property name="basePackage" value="com.yq.android_recruit.dao" />
+        <!--  创建dao方法，就要执行SQL语句，就要创建session-->
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"></property>
+
+    </bean>
+
+    <!--  使德鲁伊可以监控spring容器，创建要切入的内容-->
+    <bean id="druidStatInterceptor" class="com.alibaba.druid.support.spring.stat.DruidStatInterceptor"></bean>
+    <!-- 德鲁伊监控spring的切入点，com.seecen.ssm.service.impl包下的所有类 -->
+    <bean id="druidStatPointcut" class="org.springframework.aop.support.JdkRegexpMethodPointcut" scope="prototype">
+        <property name="patterns">
+            <list>
+                <value>com.yq.android_recruit.service.impl.*</value>
+            </list>
+        </property>
+    </bean>
+
+    <aop:config proxy-target-class="true">
+        <!-- 引用方法切面和类包的切面，引用切面 。将advice-ref切到pointcut-ref中去-->
+        <aop:advisor advice-ref="druidStatInterceptor" pointcut-ref="druidStatPointcut" />
+    </aop:config>
+</beans>

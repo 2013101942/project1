@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yq.android_recruit.dao.IPersonCompanyDao">
+    <!--App投递简历，PC邀请简历-->
+     <insert id="setPersonCompany" parameterType="com.yq.android_recruit.pojo.PersonCompany">
+         insert
+             when (not exists (select 1 from t_person_company where person_Id = #{personId}  and company_Id = #{companyId} and company_To_Person = #{companyToPerson} and success = #{success} and resume_Name = #{resumeName} and recruit_id = #{recruitId})) then
+         into t_person_company values(#{companyId},#{personId},#{companyToPerson},#{success},#{message},sysdate,#{resumeName},#{recruitId})
+             select #{companyId},#{personId},#{companyToPerson},#{success},#{resumeName},#{recruitId} from dual
+     </insert>
+    <!-- App投递简历或PC邀请简历，就要插入另一条 -->
+    <insert id="setPersonCompanyTwo" parameterType="com.yq.android_recruit.pojo.PersonCompany">
+        insert
+            when (not exists (select 1 from t_person_company where person_Id = #{personId}  and company_Id = #{companyId} and company_To_Person = #{companyToPerson} and success = #{success} and resume_Name = #{resumeName} and recruit_id = #{recruitId})) then
+        into t_person_company values(#{companyId},#{personId},#{companyToPerson},#{success},#{message},sysdate,#{resumeName},#{recruitId})
+            select #{companyId},#{personId},#{companyToPerson},#{success},#{resumeName},#{recruitId} from dual
+    </insert>
+    <!--App取消投递简历-->
+    <delete id="cancelApply" parameterType="String">
+        delete t_person_company where person_id = #{param1} and company_id = #{param2} and company_to_person = #{param3} and  recruit_id = #{param4} and success = '0'
+    </delete>
+
+    <!--PC发送消息-->
+     <update id="sendMsgPC">
+        update t_person_company set message = #{param4} , times = sysdate where person_id = #{param1} and company_id = #{param2} and resume_name = #{param3} and success = '1' and company_to_person = '1'
+     </update>
+    <!--App发送消息-->
+    <update id="sendMsgApp">
+        update t_person_company set message = #{param4} ,times = sysdate where person_id = #{param1} and company_id = #{param2} and recruit_id = #{param3} and  company_to_person = '0'
+    </update>
+
+    <resultMap id="messageMap" type="com.yq.android_recruit.pojo.PersonCompany">
+        <result column="company_id" property="companyId"/>
+        <result column="u_username" property="userName"/>
+        <result column="person_id" property="personId"/>
+        <result column="company_to_person" property="companyToPerson"/>
+        <result column="success" property="success"/>
+        <result column="message" property="message"/>
+        <result column="times" property="times"/>
+    </resultMap>
+    <!--Pc查看已发送的留言,按照简历来检索-->
+    <select id="getPcSendMsg" resultMap="messageMap" parameterType="String">
+        select distinct pc.company_id,pc.person_id,pc.company_to_person,pc.success,pc.message,pc.times,pc.resume_name,u.u_username from t_person_company pc left join T_user u on pc.person_id = u.user_id where company_id = #{companyId} and company_to_person = '1' and message is not null  order by times desc
+    </select>
+    <!--App查看已发送的留言，按照招聘信息检索-->
+    <select id="getAppSendedMsg" resultMap="messageMap" parameterType="String">
+        select distinct pc.company_id,pc.person_id,pc.company_to_person,pc.success,pc.message,pc.times,pc.recruit_id,u.u_username from t_person_company pc left join T_user u on pc.company_id = u.user_id where person_id = #{personId} and company_to_person = '0' and message is not null  order by times desc
+    </select>
+
+    <!--PC查看已接收的留言-->
+    <select id="getPcReceivedMsg" resultMap="messageMap" parameterType="String">
+        select distinct pc.company_id,pc.person_id,pc.company_to_person,pc.success,pc.message,pc.times,pc.recruit_id,u.u_username from t_person_company pc left join T_user u on pc.person_id = u.user_id where company_id = #{companyId} and company_to_person = '0' and message is not null  order by times desc
+    </select>
+    <!--App查看已接收的留言-->
+    <select id="getAppReceivedMsg" resultMap="messageMap" parameterType="String">
+        select distinct pc.company_id,pc.person_id,pc.company_to_person,pc.success,pc.message,pc.times,pc.resume_name,u.u_username from t_person_company pc left join T_user u on pc.company_id = u.user_id where person_id = #{personId} and company_to_person = '1' and message is not null  order by times desc
+    </select>
+
+    <!--<select id="getPersonId" resultType="java.util.List" parameterType="String">-->
+        <!--select person_id from t_person_company where company_id = #{companyId} order by times desc-->
+    <!--</select>-->
+<!--PC筛选简历通过-->
+    <update id="adopt">
+        update t_person_company set success = '1' where company_id = #{param1} and person_id = #{param2} and resume_name = #{param3}
+    </update>
+
+    <resultMap id="DivAppRecruitMap" type="com.yq.android_recruit.pojo.DivAppRecruitInfo">
+        <result column="recruit_id" property="recruitId"/>
+        <result column="e_id" property="eId"/>
+        <result column="e_name" property="eName"/>
+        <result column="e_property" property="eProperty"/>
+        <result column="e_city" property="city"/>
+        <result column="job" property="job"/>
+        <result column="staff_num" property="staffNum"/>
+        <result column="recruit_info" property="recruitInfo"/>
+        <result column="experience" property="experience"/>
+        <result column="salary_start" property="salaryStart"/>
+        <result column="salary_end" property="salaryEnd"/>
+        <result column="resume_name" property="resumeName"/>
+        <result column="times" property="times"/>
+    </resultMap>
+    <!-- 查看已通过的招聘信息-->
+    <select id="getAdoptedRecruit" resultMap="DivAppRecruitMap" parameterType="String">
+    select distinct pc.resume_name, r.recruit_id,r.e_id,e.e_name,e.e_property,e.e_city,r.job,r.salary_start,r.salary_end
+        ,r.staff_num,r.recruit_info,r.experience
+        from t_person_company pc
+        left join t_enterprise e on pc.company_id = e.e_id
+        left join t_recruitment_Info r on pc.company_id = r.e_id  and pc.recruit_id = r.recruit_id
+         where pc.resume_name is not null and pc.success = 1 and pc.person_id = #{personId}
+    </select>
+
+    <!--修改简历名-->
+    <update id="updateResumeName" parameterType="String">
+        update t_person_company set resume_name = #{param3} where person_id = #{param1} and resume_name = #{param2}
+    </update>
+
+    <!--因删除某条招聘信息删除某条记录-->
+    <delete id="deletePersonCompanyPC" parameterType="String">
+        delete t_person_company where company_id = #{param1} and recruit_id = #{param2}
+    </delete>
+    <!--因删除某条简历而删除某条记录-->
+    <delete id="deletePersonCompanyApp" parameterType="String">
+        delete t_person_company where person_id = #{param1} and resume_name = #{param2}
+    </delete>
+</mapper>
